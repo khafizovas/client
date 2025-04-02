@@ -52,6 +52,7 @@
       cell={cell}
       isSelected={selectedChip?.row === rowIndex && selectedChip?.column === colIndex }
       onSelect={selectChip}
+      hasSelectedChip={selectedChip !== null}
     />
     {/each}
   {/each}
