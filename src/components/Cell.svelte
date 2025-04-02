@@ -82,6 +82,7 @@
   }
 
   .cell-background.can-be-selected {
+    background: lightgrey;
     cursor: pointer;
   }
 
