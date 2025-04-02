@@ -12,13 +12,18 @@
   }
 </script>
 
-<label>
-  <select value={boardData.boardSize} on:change={changeBoardSize}>
-    {#each Object.keys(BOARD_SIZES) as size}
-      <option value={size}>{size}</option>
-    {/each}
-  </select>
-</label>
+<div class="controls">
+  <label>
+    Размер поля:
+    <select value={boardData.boardSize} on:change={changeBoardSize}>
+      {#each Object.keys(BOARD_SIZES) as size}
+        <option value={size}>{size}</option>
+      {/each}
+    </select>
+  </label>
+
+  <button on:click={gameStore.resetGame}>Начать заново</button>
+</div>
 
 <div 
   class="board" 
@@ -36,6 +41,11 @@
 </div>
 
 <style>
+  .controls {
+    display: flex;
+    gap: 50px;
+  }
+
   .board {
     display: grid;
     gap: 50px;

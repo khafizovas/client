@@ -42,7 +42,7 @@ function createGameStore() {
         board: initializeBoard(BOARD_SIZES[size]),
         currentPlayer: DEFAULT_PLAYER,
       })),
-    reset: () =>
+    resetGame: () =>
       update((state) => ({
         ...state,
         board: initializeBoard(BOARD_SIZES[state.boardSize]),
