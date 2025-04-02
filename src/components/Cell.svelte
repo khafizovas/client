@@ -1,21 +1,22 @@
 <script lang="ts">
   import Line from './Line.svelte';
-  import type { BoardSizeValue, Cell } from '../store/game';
+  import { BOARD_SIZES, gameStore, type Cell } from '../store/game';
 
   export let rowIndex: number;
   export let colIndex: number;
   export let cell: Cell;
-  export let boardSize: BoardSizeValue;
 
-  const isHorizontalVisible = colIndex < boardSize.width - 1;
+  $: boardSize = BOARD_SIZES[$gameStore.boardSize];
 
-  const isVerticalVisible = rowIndex < boardSize.height - 1;
+  $: isHorizontalVisible = colIndex < boardSize.width - 1;
 
-  const isFirstDiagonalVisible = (rowIndex + colIndex) % 2 === 0
+  $: isVerticalVisible = rowIndex < boardSize.height - 1;
+
+  $: isFirstDiagonalVisible = (rowIndex + colIndex) % 2 === 0
     && colIndex < boardSize.width - 1
     && rowIndex < boardSize.height - 1;
 
-  const isSecondDiagonalVisible = (rowIndex + colIndex) % 2 === 0
+  $: isSecondDiagonalVisible = (rowIndex + colIndex) % 2 === 0
     && colIndex !== 0 && rowIndex < boardSize.height - 1;
 </script>
 

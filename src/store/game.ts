@@ -6,7 +6,7 @@ export const BOARD_SIZES = {
   'Fanoron-Sivy': { width: 9, height: 5 },
 };
 
-const DEFAULT_BOARD_SIZE = 'Fanoron-Sivy';
+export const DEFAULT_BOARD_SIZE = 'Fanoron-Sivy';
 const DEFAULT_PLAYER = 'playerA';
 
 export type BoardSize = keyof typeof BOARD_SIZES;
@@ -36,7 +36,8 @@ function createGameStore() {
   return {
     subscribe,
     setBoardSize: (size: BoardSize) =>
-      update(() => ({
+      update((state) => ({
+        ...state,
         boardSize: size,
         board: initializeBoard(BOARD_SIZES[size]),
         currentPlayer: DEFAULT_PLAYER,

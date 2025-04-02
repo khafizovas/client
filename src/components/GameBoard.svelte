@@ -1,14 +1,28 @@
 <script lang="ts">
   import Cell from './Cell.svelte';
-  import { BOARD_SIZES, gameStore } from '../store/game';
+  import { BOARD_SIZES, gameStore, type BoardSize } from '../store/game';
 
-  let boardData;
   $: boardData = $gameStore;
+
+  function changeBoardSize(e: Event) {
+    const selectElement = e.target as HTMLSelectElement;
+    const newSize = selectElement.value as BoardSize;
+
+    gameStore.setBoardSize(newSize);
+  }
 </script>
+
+<label>
+  <select value={boardData.boardSize} on:change={changeBoardSize}>
+    {#each Object.keys(BOARD_SIZES) as size}
+      <option value={size}>{size}</option>
+    {/each}
+  </select>
+</label>
 
 <div 
   class="board" 
-  style="grid-template-columns: repeat({BOARD_SIZES[boardData.boardSize].width}, 1fr); grid-template-rows: repeat({BOARD_SIZES[boardData.boardSize].height}, 1fr);"
+  style="grid-template-columns: repeat({BOARD_SIZES[boardData.boardSize].width}, 1fr); grid-template-rows: repeat({BOARD_SIZES[$gameStore.boardSize].height}, 1fr);"
 >
   {#each boardData.board as row, rowIndex}
     {#each row as cell, colIndex}
@@ -16,7 +30,6 @@
       rowIndex={rowIndex} 
       colIndex={colIndex} 
       cell={cell} 
-      boardSize={BOARD_SIZES[boardData.boardSize]}
     />
     {/each}
   {/each}
