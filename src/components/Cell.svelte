@@ -8,9 +8,15 @@
   export let boardSize: BoardSizeValue;
 
   const isHorizontalVisible = colIndex < boardSize.width - 1;
+
   const isVerticalVisible = rowIndex < boardSize.height - 1;
-  const isFirstDiagonalVisible = colIndex < boardSize.width - 1 && rowIndex < boardSize.height - 1;
-  const isSecondDiagonalVisible = colIndex !== 0 && rowIndex < boardSize.height - 1;
+
+  const isFirstDiagonalVisible = (rowIndex + colIndex) % 2 === 0
+    && colIndex < boardSize.width - 1
+    && rowIndex < boardSize.height - 1;
+
+  const isSecondDiagonalVisible = (rowIndex + colIndex) % 2 === 0
+    && colIndex !== 0 && rowIndex < boardSize.height - 1;
 </script>
 
 <div class="cell">
