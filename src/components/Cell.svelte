@@ -1,13 +1,15 @@
 <script lang="ts">
   import Line from './Line.svelte';
-  import { BOARD_SIZES, gameStore, type Cell } from '../store/game';
+  import { BOARD_SIZES, gameStore, type Cell, type Position } from '../store/game';
 
   export let rowIndex: number;
   export let colIndex: number;
   export let cell: Cell;
   export let isSelected: boolean;
   export let onSelect: (row: number, column: number) => void;
-  export let hasSelectedChip: boolean;
+  export let selectedChip: Position | null;
+
+  $: hasSelectedChip = selectedChip !== null;
 
   $: boardSize = BOARD_SIZES[$gameStore.boardSize];
   $: currentPlayer = $gameStore.currentPlayer;
@@ -20,7 +22,13 @@
   $: isSecondDiagonalVisible = (rowIndex + colIndex) % 2 === 0
     && colIndex !== 0 && rowIndex < boardSize.height - 1;
 
-  $: canBeSelected = !hasSelectedChip && cell === currentPlayer || hasSelectedChip && !cell;
+  $: canBeSelected =
+    !hasSelectedChip
+      && cell === currentPlayer
+    || hasSelectedChip
+      && !cell
+      && Math.abs(rowIndex - selectedChip!.row) <= 1
+      && Math.abs(colIndex - selectedChip!.column) <= 1;
 
   function selectCell() {
     if (!canBeSelected) {
