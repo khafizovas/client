@@ -10,19 +10,17 @@
   export let hasSelectedChip: boolean;
 
   $: boardSize = BOARD_SIZES[$gameStore.boardSize];
+  $: currentPlayer = $gameStore.currentPlayer;
 
   $: isHorizontalVisible = colIndex < boardSize.width - 1;
-
   $: isVerticalVisible = rowIndex < boardSize.height - 1;
-
   $: isFirstDiagonalVisible = (rowIndex + colIndex) % 2 === 0
     && colIndex < boardSize.width - 1
     && rowIndex < boardSize.height - 1;
-
   $: isSecondDiagonalVisible = (rowIndex + colIndex) % 2 === 0
     && colIndex !== 0 && rowIndex < boardSize.height - 1;
 
-  $: canBeSelected = !hasSelectedChip && cell || hasSelectedChip && !cell;
+  $: canBeSelected = !hasSelectedChip && cell === currentPlayer || hasSelectedChip && !cell;
 
   function selectCell() {
     if (!canBeSelected) {

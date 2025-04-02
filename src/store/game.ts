@@ -46,7 +46,10 @@ function createGameStore() {
         updatedBoard[to.row][to.column] = updatedBoard[from.row][from.column];
         updatedBoard[from.row][from.column] = null;
 
-        return { ...state, board: updatedBoard };
+        const updatedPlayer =
+          state.currentPlayer === 'playerA' ? 'playerB' : 'playerA';
+
+        return { ...state, board: updatedBoard, currentPlayer: updatedPlayer };
       }),
     setBoardSize: (size: BoardSize) =>
       update((state) => ({
