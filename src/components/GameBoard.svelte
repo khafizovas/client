@@ -8,8 +8,15 @@
   $: selectedChip = null as (Position | null);
 
   function selectChip(row: number, column: number) {
-    console.log('debug selectChip', selectedChip);
-    selectedChip = { row, column };
+    const clickedChip = { row, column };
+
+    if (!selectedChip) {
+      selectedChip = clickedChip;
+      return;
+    }
+
+    gameStore.moveChip(selectedChip, clickedChip);
+    selectedChip = null;
   }
 
   function changeBoardSize(e: Event) {
