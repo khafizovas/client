@@ -1,8 +1,16 @@
 <script lang="ts">
   import Cell from './Cell.svelte';
-  import { BOARD_SIZES, gameStore, type BoardSize } from '../store/game';
+  import { BOARD_SIZES, gameStore, type BoardSize, type Position } from '../store/game';
 
   $: boardData = $gameStore;
+
+  
+  $: selectedChip = null as (Position | null);
+
+  function selectChip(row: number, column: number) {
+    console.log('debug selectChip', selectedChip);
+    selectedChip = { row, column };
+  }
 
   function changeBoardSize(e: Event) {
     const selectElement = e.target as HTMLSelectElement;
@@ -34,7 +42,9 @@
     <Cell 
       rowIndex={rowIndex} 
       colIndex={colIndex} 
-      cell={cell} 
+      cell={cell}
+      isSelected={selectedChip?.row === rowIndex && selectedChip?.column === colIndex }
+      onSelect={selectChip}
     />
     {/each}
   {/each}

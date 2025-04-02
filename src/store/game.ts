@@ -18,6 +18,11 @@ export type BoardSizeValue = {
 export type Player = 'playerA' | 'playerB';
 export type Cell = Player | null;
 
+export type Position = {
+  row: number;
+  column: number;
+};
+
 export type GameState = {
   boardSize: BoardSize;
   board: Cell[][];
@@ -35,6 +40,14 @@ function createGameStore() {
 
   return {
     subscribe,
+    moveChip: (from: Position, to: Position) =>
+      update((state) => {
+        const updatedBoard = JSON.parse(JSON.stringify(state.board));
+        updatedBoard[to.row][to.column] = updatedBoard[from.row][from.column];
+        updatedBoard[from.row][from.column] = null;
+
+        return { ...state, board: updatedBoard };
+      }),
     setBoardSize: (size: BoardSize) =>
       update((state) => ({
         ...state,
