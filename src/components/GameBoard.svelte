@@ -1,17 +1,14 @@
 <script lang="ts">
-  import { get } from 'svelte/store';
-
   import Cell from './Cell.svelte';
-  import { gameStore } from '../store/game';
+  import { BOARD_SIZES, gameStore } from '../store/game';
 
   let boardData;
-
-  $: boardData = get(gameStore);
+  $: boardData = $gameStore;
 </script>
 
 <div 
   class="board" 
-  style="grid-template-columns: repeat({boardData.boardSize.width}, 1fr); grid-template-rows: repeat({boardData.boardSize.height}, 1fr);"
+  style="grid-template-columns: repeat({BOARD_SIZES[boardData.boardSize].width}, 1fr); grid-template-rows: repeat({BOARD_SIZES[boardData.boardSize].height}, 1fr);"
 >
   {#each boardData.board as row, rowIndex}
     {#each row as cell, colIndex}
@@ -19,7 +16,7 @@
       rowIndex={rowIndex} 
       colIndex={colIndex} 
       cell={cell} 
-      boardSize={boardData.boardSize}
+      boardSize={BOARD_SIZES[boardData.boardSize]}
     />
     {/each}
   {/each}
