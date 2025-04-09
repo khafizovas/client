@@ -10,16 +10,20 @@
   $: currentPlayer = $gameStore.currentPlayer;
   $: hasSelectedChip = selectedChip !== null;
 
-  $: canBeSelected =
-    !hasSelectedChip
-      && cell.chip === currentPlayer
-      && cell.adjacents.filter(({ chip }) => chip === null).length > 0
-    || hasSelectedChip
-      && !cell.chip
-      && cell.adjacents.includes(selectedChip!);
+  $: hasChipEmptyAdjacents = cell.adjacents.filter(({ chip }) => chip === null).length > 0;
+  $: canSelectChip = !hasSelectedChip
+    && cell.chip === currentPlayer
+    && hasChipEmptyAdjacents
+
+  $: isEmptyCellAdjacent = cell.adjacents.includes(selectedChip!);
+  $: canSelectEmptyCell = hasSelectedChip
+    && cell.chip === null
+    && isEmptyCellAdjacent;
+
+  $: canSelectCell = canSelectChip || canSelectEmptyCell;
 
   function selectCell() {
-    if (!canBeSelected) {
+    if (!canSelectCell) {
       return;
     }
 
@@ -34,7 +38,7 @@
   <Line type="diagonal diagonal-2" parentCell={cell} />
 
   <button
-    class="cell-background {canBeSelected ? 'can-be-selected' : ''} {isSelected ? 'selected' : ''}"
+    class="cell-background {canSelectCell ? 'can-be-selected' : ''} {isSelected ? 'selected' : ''}"
     type="button"
     aria-label="{cell.position.row} {cell.position.column} {cell.chip}"
     on:click={selectCell}
