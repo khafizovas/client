@@ -16,11 +16,16 @@ export type BoardSizeValue = {
 };
 
 export type Player = 'playerA' | 'playerB';
-export type Cell = Player | null;
 
 export type Position = {
   row: number;
   column: number;
+};
+
+export type Cell = {
+  position: Position;
+  chip: Player | null;
+  adjacents: Cell[];
 };
 
 export type GameState = {
@@ -42,9 +47,10 @@ function createGameStore() {
     subscribe,
     moveChip: (from: Position, to: Position) =>
       update((state) => {
-        const updatedBoard = JSON.parse(JSON.stringify(state.board));
-        updatedBoard[to.row][to.column] = updatedBoard[from.row][from.column];
-        updatedBoard[from.row][from.column] = null;
+        const updatedBoard = structuredClone(state.board);
+        updatedBoard[to.row][to.column].chip =
+          updatedBoard[from.row][from.column].chip;
+        updatedBoard[from.row][from.column].chip = null;
 
         const updatedPlayer =
           state.currentPlayer === 'playerA' ? 'playerB' : 'playerA';
@@ -69,23 +75,56 @@ function createGameStore() {
 
 function initializeBoard(size: BoardSizeValue): Cell[][] {
   const centerRow = Math.floor(size.height / 2);
+  const centerCell = Math.floor(size.width / 2);
 
   const board = Array.from({ length: size.height }, (_, row) =>
-    Array.from({ length: size.width }, (_, col) => {
-      if (row < centerRow) return 'playerB';
-      if (row > centerRow) return 'playerA';
+    Array.from({ length: size.width }, (_, column) => {
+      const chip: Player | null =
+        (row < centerRow && 'playerA') ||
+        (row > centerRow && 'playerB') ||
+        (column !== centerCell && column % 2 === 0 && 'playerB') ||
+        (column !== centerCell && 'playerA') ||
+        null;
 
-      if (row === centerRow) {
-        const centerCell = Math.floor(size.width / 2);
+      return {
+        chip,
+        position: {
+          row,
+          column,
+        },
+        adjacents: new Array<Cell>(),
+      };
+    })
+  );
 
-        return col === centerCell
-          ? null
-          : col % 2 === 0
-          ? 'playerB'
-          : 'playerA';
+  board.forEach((row, rowInd) =>
+    row.forEach((cell, colInd) => {
+      const hasUp = rowInd - 1 >= 0;
+      const hasDown = rowInd + 1 < size.height;
+      const hasLeft = colInd - 1 >= 0;
+      const hasRight = colInd + 1 < size.width;
+
+      const adjacents: (Cell | false)[] = [
+        hasLeft && board[rowInd][colInd - 1],
+        hasRight && board[rowInd][colInd + 1],
+        hasUp && board[rowInd - 1][colInd],
+        hasDown && board[rowInd + 1][colInd],
+      ];
+
+      if ((rowInd + colInd) % 2 === 0) {
+        adjacents.push(
+          hasUp && hasLeft && board[rowInd - 1][colInd - 1],
+          hasUp && hasRight && board[rowInd - 1][colInd + 1],
+          hasDown && hasLeft && board[rowInd + 1][colInd - 1],
+          hasDown && hasRight && board[rowInd + 1][colInd + 1]
+        );
       }
 
-      return null;
+      const filteredAdjacents: Cell[] = adjacents.filter(
+        (adjacent) => !!adjacent
+      );
+
+      cell.adjacents.push(...filteredAdjacents);
     })
   );
 

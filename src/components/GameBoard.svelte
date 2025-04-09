@@ -1,21 +1,17 @@
 <script lang="ts">
   import Cell from './Cell.svelte';
-  import { BOARD_SIZES, gameStore, type BoardSize, type Position } from '../store/game';
+  import { BOARD_SIZES, gameStore, type BoardSize, type Cell as CellType } from '../store/game';
 
   $: boardData = $gameStore;
+  $: selectedChip = null as (CellType | null);
 
-  
-  $: selectedChip = null as (Position | null);
-
-  function selectChip(row: number, column: number) {
-    const clickedChip = { row, column };
-
+  function selectChip(cell: CellType) {
     if (!selectedChip) {
-      selectedChip = clickedChip;
+      selectedChip = cell;
       return;
     }
 
-    gameStore.moveChip(selectedChip, clickedChip);
+    gameStore.moveChip(selectedChip.position, cell.position);
     selectedChip = null;
   }
 
@@ -44,15 +40,13 @@
   class="board" 
   style="grid-template-columns: repeat({BOARD_SIZES[boardData.boardSize].width}, 1fr); grid-template-rows: repeat({BOARD_SIZES[$gameStore.boardSize].height}, 1fr);"
 >
-  {#each boardData.board as row, rowIndex}
-    {#each row as cell, colIndex}
+  {#each boardData.board as row}
+    {#each row as cell}
     <Cell 
-      rowIndex={rowIndex} 
-      colIndex={colIndex} 
       cell={cell}
-      isSelected={selectedChip?.row === rowIndex && selectedChip?.column === colIndex }
-      onSelect={selectChip}
+      isSelected={selectedChip === cell }
       selectedChip={selectedChip}
+      onSelect={selectChip}
     />
     {/each}
   {/each}
