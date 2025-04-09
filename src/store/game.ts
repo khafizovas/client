@@ -28,29 +28,50 @@ export type Cell = {
   adjacents: Cell[];
 };
 
+export type MoveOption = 'capturing' | 'paika';
+export type Move = {
+  type: MoveOption;
+  from: Position;
+  to: Position;
+};
+
+export type GameTurn = {
+  availableMoves: Move[];
+  moves: Position[];
+};
+
 export type GameState = {
   boardSize: BoardSize;
   board: Cell[][];
   currentPlayer: Player;
+  currentTurn: GameTurn;
 };
 
 const initialState: GameState = {
   boardSize: DEFAULT_BOARD_SIZE,
   board: initializeBoard(BOARD_SIZES[DEFAULT_BOARD_SIZE]),
   currentPlayer: DEFAULT_PLAYER,
+  currentTurn: {
+    availableMoves: [],
+    moves: [],
+  },
 };
 
 function createGameStore() {
+  initialState.currentTurn.availableMoves.push(
+    ...getAvailableMoves(initialState.board, initialState.currentPlayer)
+  );
+
   const { subscribe, update } = writable(initialState);
 
   return {
     subscribe,
-    moveChip: (from: Position, to: Position) =>
+    moveChip: (move: Move) =>
       update((state) => {
         const updatedBoard = structuredClone(state.board);
-        updatedBoard[to.row][to.column].chip =
-          updatedBoard[from.row][from.column].chip;
-        updatedBoard[from.row][from.column].chip = null;
+        updatedBoard[move.to.row][move.to.column].chip =
+          updatedBoard[move.from.row][move.from.column].chip;
+        updatedBoard[move.from.row][move.from.column].chip = null;
 
         const updatedPlayer =
           state.currentPlayer === 'playerA' ? 'playerB' : 'playerA';
@@ -129,6 +150,57 @@ function initializeBoard(size: BoardSizeValue): Cell[][] {
   );
 
   return board;
+}
+
+function getAvailableMoves(board: Cell[][], currentPlayer: Player): Move[] {
+  const emptyCells = board.reduce((acc, row) => {
+    return [...acc, ...row.filter((cell) => cell.chip === null)];
+  }, []);
+
+  const availableMoves = emptyCells.reduce(
+    (acc, emptyCell) => [
+      ...acc,
+      ...emptyCell.adjacents
+        .filter((adjacent) => adjacent.chip === currentPlayer)
+        .map((cell) => {
+          const delta = {
+            row: emptyCell.position.row - cell.position.row,
+            column: emptyCell.position.column - cell.position.column,
+          };
+
+          const isApproach =
+            emptyCell.adjacents.filter(
+              (adjacent) =>
+                adjacent.chip !== currentPlayer &&
+                adjacent.chip !== null &&
+                adjacent.position.row - emptyCell.position.row === delta.row &&
+                adjacent.position.column - emptyCell.position.column ===
+                  delta.column
+            ).length > 0;
+
+          const isWithdrawal =
+            cell.adjacents.filter(
+              (adjacent) =>
+                adjacent.chip !== currentPlayer &&
+                adjacent.chip !== null &&
+                adjacent.position.row - cell.position.row === delta.row &&
+                adjacent.position.column - cell.position.column === delta.column
+            ).length > 0;
+
+          return {
+            from: cell.position,
+            to: emptyCell.position,
+            type:
+              isApproach || isWithdrawal
+                ? ('capturing' as const)
+                : ('paika' as const),
+          };
+        }),
+    ],
+    new Array<Move>()
+  );
+
+  return availableMoves;
 }
 
 export const gameStore = createGameStore();

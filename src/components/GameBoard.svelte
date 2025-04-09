@@ -11,7 +11,7 @@
       return;
     }
 
-    gameStore.moveChip(selectedChip.position, cell.position);
+    gameStore.moveChip({from: selectedChip.position, to: cell.position, type: 'paika'});
     selectedChip = null;
   }
 
