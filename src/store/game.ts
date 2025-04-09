@@ -36,8 +36,9 @@ export type Move = {
 };
 
 export type GameTurn = {
+  hasCapturingMoves: boolean;
   availableMoves: Move[];
-  moves: Position[];
+  visitedCells: Position[];
 };
 
 export type GameState = {
@@ -53,14 +54,20 @@ const initialState: GameState = {
   currentPlayer: DEFAULT_PLAYER,
   currentTurn: {
     availableMoves: [],
-    moves: [],
+    hasCapturingMoves: false,
+    visitedCells: [],
   },
 };
 
 function createGameStore() {
-  initialState.currentTurn.availableMoves.push(
-    ...getAvailableMoves(initialState.board, initialState.currentPlayer)
+  const [availableMoves, hasCapturingMoves] = getAvailableMoves(
+    initialState.board,
+    initialState.currentPlayer,
+    initialState.currentTurn.visitedCells
   );
+
+  initialState.currentTurn.availableMoves.push(...availableMoves);
+  initialState.currentTurn.hasCapturingMoves = hasCapturingMoves;
 
   const { subscribe, update } = writable(initialState);
 
@@ -68,15 +75,62 @@ function createGameStore() {
     subscribe,
     moveChip: (move: Move) =>
       update((state) => {
+        // Перемещаем шашку
         const updatedBoard = structuredClone(state.board);
         updatedBoard[move.to.row][move.to.column].chip =
           updatedBoard[move.from.row][move.from.column].chip;
         updatedBoard[move.from.row][move.from.column].chip = null;
 
-        const updatedPlayer =
-          state.currentPlayer === 'playerA' ? 'playerB' : 'playerA';
+        // Добавляем ячейки в массив посещённых в этом ходе
+        let updatedVisitedCells = structuredClone(
+          state.currentTurn.visitedCells
+        );
+        updatedVisitedCells.push(move.from, move.to);
 
-        return { ...state, board: updatedBoard, currentPlayer: updatedPlayer };
+        // Получаем доступные ходы и возможность есть шашки
+        let [updatedAvailableMoves, updatedHasCapturingMoves] =
+          getAvailableMoves(
+            state.board,
+            state.currentPlayer,
+            updatedVisitedCells
+          );
+
+        // Можно ли продолжить есть шашки?
+        const shouldContinueTurn =
+          move.type === 'capturing' && updatedHasCapturingMoves;
+
+        let updatedPlayer: Player;
+
+        // Если продолжаем есть шашки, не меняем игрока и продолжаем ход
+        if (shouldContinueTurn) {
+          updatedPlayer = state.currentPlayer;
+        }
+        // Если нет, меняем игрока,
+        // обнуляем посещённые ячейки
+        // и снова ищем доступные ходы уже для нового игрока
+        else {
+          updatedPlayer =
+            state.currentPlayer === 'playerA' ? 'playerB' : 'playerA';
+
+          updatedVisitedCells = [];
+
+          [updatedAvailableMoves, updatedHasCapturingMoves] = getAvailableMoves(
+            updatedBoard,
+            updatedPlayer,
+            updatedVisitedCells
+          );
+        }
+
+        return {
+          ...state,
+          board: updatedBoard,
+          currentPlayer: updatedPlayer,
+          currentTurn: {
+            availableMoves: updatedAvailableMoves,
+            hasCapturingMoves: updatedHasCapturingMoves,
+            visitedCells: updatedVisitedCells,
+          },
+        };
       }),
     setBoardSize: (size: BoardSize) =>
       update((state) => ({
@@ -152,9 +206,26 @@ function initializeBoard(size: BoardSizeValue): Cell[][] {
   return board;
 }
 
-function getAvailableMoves(board: Cell[][], currentPlayer: Player): Move[] {
+function getAvailableMoves(
+  board: Cell[][],
+  currentPlayer: Player,
+  visitedCells: Position[]
+): [Move[], boolean] {
+  let hasCapturingMoves = false;
+
   const emptyCells = board.reduce((acc, row) => {
-    return [...acc, ...row.filter((cell) => cell.chip === null)];
+    return [
+      ...acc,
+      ...row.filter(
+        (cell) =>
+          cell.chip === null &&
+          visitedCells.filter(
+            (visitedCell) =>
+              visitedCell.row === cell.position.row ||
+              visitedCell.column === cell.position.column
+          ).length === 0
+      ),
+    ];
   }, []);
 
   const availableMoves = emptyCells.reduce(
@@ -187,6 +258,10 @@ function getAvailableMoves(board: Cell[][], currentPlayer: Player): Move[] {
                 adjacent.position.column - cell.position.column === delta.column
             ).length > 0;
 
+          if (isApproach || isWithdrawal) {
+            hasCapturingMoves = true;
+          }
+
           return {
             from: cell.position,
             to: emptyCell.position,
@@ -200,7 +275,7 @@ function getAvailableMoves(board: Cell[][], currentPlayer: Player): Move[] {
     new Array<Move>()
   );
 
-  return availableMoves;
+  return [availableMoves, hasCapturingMoves];
 }
 
 export const gameStore = createGameStore();

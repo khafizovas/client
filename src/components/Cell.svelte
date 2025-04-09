@@ -8,12 +8,22 @@
   export let selectedChip: Cell | null;
 
   $: currentPlayer = $gameStore.currentPlayer;
+
   $: hasSelectedChip = selectedChip !== null;
 
-  $: hasChipEmptyAdjacents = cell.adjacents.filter(({ chip }) => chip === null).length > 0;
-  $: canSelectChip = !hasSelectedChip
-    && cell.chip === currentPlayer
-    && hasChipEmptyAdjacents
+  // $: hasChipEmptyAdjacents = cell.adjacents.filter(({ chip }) => chip === null).length > 0;
+  // $: canSelectChip = !hasSelectedChip
+  //   && cell.chip === currentPlayer
+  //   && hasChipEmptyAdjacents
+
+  $: canSelectChip = !hasSelectedChip 
+    && ($gameStore
+      .currentTurn
+      .availableMoves
+      .filter((move => move.from === cell.position))
+      .length > 0
+      || !$gameStore.currentTurn.hasCapturingMoves
+    );
 
   $: isEmptyCellAdjacent = cell.adjacents.includes(selectedChip!);
   $: canSelectEmptyCell = hasSelectedChip
