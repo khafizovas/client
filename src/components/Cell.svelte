@@ -7,28 +7,24 @@
   export let onSelect: (cell: Cell) => void;
   export let selectedChip: Cell | null;
 
-  $: currentPlayer = $gameStore.currentPlayer;
-
   $: hasSelectedChip = selectedChip !== null;
 
-  // $: hasChipEmptyAdjacents = cell.adjacents.filter(({ chip }) => chip === null).length > 0;
-  // $: canSelectChip = !hasSelectedChip
-  //   && cell.chip === currentPlayer
-  //   && hasChipEmptyAdjacents
-
-  $: canSelectChip = !hasSelectedChip 
-    && ($gameStore
+  $: availableMovesStart = $gameStore
       .currentTurn
       .availableMoves
-      .filter((move => move.from === cell.position))
-      .length > 0
-      || !$gameStore.currentTurn.hasCapturingMoves
-    );
+      .filter((move) => move.from === cell.position);
+  $: availableMovesEnd = $gameStore
+      .currentTurn
+      .availableMoves
+      .filter((move) => move.to === cell.position);
 
-  $: isEmptyCellAdjacent = cell.adjacents.includes(selectedChip!);
+  $: canSelectChip = !hasSelectedChip
+    && (availableMovesStart.filter((move) => move.type !== 'paika').length > 0
+        || !$gameStore.currentTurn.hasCapturingMoves);
+
   $: canSelectEmptyCell = hasSelectedChip
-    && cell.chip === null
-    && isEmptyCellAdjacent;
+    && (availableMovesEnd.filter((move) => move.type !== 'paika').length > 0
+        || !$gameStore.currentTurn.hasCapturingMoves);
 
   $: canSelectCell = canSelectChip || canSelectEmptyCell;
 

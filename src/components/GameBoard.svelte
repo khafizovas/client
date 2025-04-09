@@ -23,6 +23,13 @@
   }
 </script>
 
+<div>{boardData.currentPlayer}</div>
+<div>{boardData.currentTurn.hasCapturingMoves}</div>
+<div>{boardData.currentTurn.visitedCells}</div>
+<div style="overflow: scroll;">
+  <pre>{JSON.stringify(boardData.currentTurn.availableMoves, null, 2)}</pre>
+</div>
+
 <div class="controls">
   <label>
     Размер поля:

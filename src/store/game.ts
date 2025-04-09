@@ -28,7 +28,7 @@ export type Cell = {
   adjacents: Cell[];
 };
 
-export type MoveOption = 'capturing' | 'paika';
+export type MoveOption = 'approach' | 'withdrawal' | 'paika';
 export type Move = {
   type: MoveOption;
   from: Position;
@@ -97,7 +97,7 @@ function createGameStore() {
 
         // Можно ли продолжить есть шашки?
         const shouldContinueTurn =
-          move.type === 'capturing' && updatedHasCapturingMoves;
+          move.type !== 'paika' && updatedHasCapturingMoves;
 
         let updatedPlayer: Player;
 
@@ -234,7 +234,7 @@ function getAvailableMoves(
       ...emptyCell.adjacents
         .filter((adjacent) => adjacent.chip === currentPlayer)
         .map((cell) => {
-          const delta = {
+          const deltaChipToEmpty = {
             row: emptyCell.position.row - cell.position.row,
             column: emptyCell.position.column - cell.position.column,
           };
@@ -244,9 +244,10 @@ function getAvailableMoves(
               (adjacent) =>
                 adjacent.chip !== currentPlayer &&
                 adjacent.chip !== null &&
-                adjacent.position.row - emptyCell.position.row === delta.row &&
+                adjacent.position.row - emptyCell.position.row ===
+                  deltaChipToEmpty.row &&
                 adjacent.position.column - emptyCell.position.column ===
-                  delta.column
+                  deltaChipToEmpty.column
             ).length > 0;
 
           const isWithdrawal =
@@ -254,8 +255,10 @@ function getAvailableMoves(
               (adjacent) =>
                 adjacent.chip !== currentPlayer &&
                 adjacent.chip !== null &&
-                adjacent.position.row - cell.position.row === delta.row &&
-                adjacent.position.column - cell.position.column === delta.column
+                cell.position.row - adjacent.position.row ===
+                  deltaChipToEmpty.row &&
+                cell.position.column - adjacent.position.column ===
+                  deltaChipToEmpty.column
             ).length > 0;
 
           if (isApproach || isWithdrawal) {
@@ -266,9 +269,9 @@ function getAvailableMoves(
             from: cell.position,
             to: emptyCell.position,
             type:
-              isApproach || isWithdrawal
-                ? ('capturing' as const)
-                : ('paika' as const),
+              (isApproach && ('approach' as const)) ||
+              (isWithdrawal && ('withdrawal' as const)) ||
+              ('paika' as const),
           };
         }),
     ],
