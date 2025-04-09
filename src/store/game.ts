@@ -103,7 +103,17 @@ function createGameStore() {
 
           updatedScore[state.currentPlayer] += 1;
 
-          chipToEat = null;
+          const nextChip = chipToEat.adjacents.filter(
+            (adjacent) =>
+              adjacent.position.row ===
+                chipToEat!.position.row + move.delta.row &&
+              adjacent.position.column ===
+                chipToEat!.position.column + move.delta.column &&
+              adjacent.chip !== state.currentPlayer &&
+              state.currentPlayer !== null
+          );
+
+          chipToEat = nextChip.length === 1 ? nextChip[0] : null;
         }
 
         // Добавляем ячейки в массив посещённых в этом ходе
@@ -260,50 +270,27 @@ function getAvailableMoves(
       ...emptyCell.adjacents
         .filter((adjacent) => adjacent.chip === currentPlayer)
         .map((cell) => {
-          const moveDelta = {
-            row: emptyCell.position.row - cell.position.row,
-            column: emptyCell.position.column - cell.position.column,
-          };
-
-          const chipToEatByApproach = emptyCell.adjacents.filter(
-            (adjacent) =>
-              adjacent.chip !== currentPlayer &&
-              adjacent.chip !== null &&
-              adjacent.position.row - emptyCell.position.row ===
-                moveDelta.row &&
-              adjacent.position.column - emptyCell.position.column ===
-                moveDelta.column
+          const [chipToEatByApproach, chipToEatByWithdrawal] = getChipsToEat(
+            cell,
+            emptyCell,
+            currentPlayer
           );
-          const isApproach = chipToEatByApproach.length === 1;
+          const chipToEat = chipToEatByApproach || chipToEatByWithdrawal;
 
-          const chipToEatByWithdrawal = cell.adjacents.filter(
-            (adjacent) =>
-              adjacent.chip !== currentPlayer &&
-              adjacent.chip !== null &&
-              cell.position.row - adjacent.position.row === moveDelta.row &&
-              cell.position.column - adjacent.position.column ===
-                moveDelta.column
-          );
-          const isWithdrawal = chipToEatByWithdrawal.length === 1;
-
-          if (isApproach || isWithdrawal) {
-            hasCapturingMoves = true;
-          }
+          hasCapturingMoves = hasCapturingMoves || !!chipToEat;
 
           const moveType =
-            (isApproach && ('approach' as const)) ||
-            (isWithdrawal && ('withdrawal' as const)) ||
+            (!!chipToEatByApproach && ('approach' as const)) ||
+            (!!chipToEatByWithdrawal && ('withdrawal' as const)) ||
             ('paika' as const);
-
-          const chipToEat =
-            (isApproach && chipToEatByApproach[0]) ||
-            (isWithdrawal && chipToEatByWithdrawal[0]) ||
-            null;
 
           return {
             from: cell.position,
             to: emptyCell.position,
-            delta: moveDelta,
+            delta: {
+              row: emptyCell.position.row - cell.position.row,
+              column: emptyCell.position.column - cell.position.column,
+            },
             chipToEat,
             type: moveType,
           };
@@ -313,6 +300,56 @@ function getAvailableMoves(
   );
 
   return [availableMoves, hasCapturingMoves];
+}
+
+function getChipsToEat(
+  from: Cell,
+  to: Cell,
+  currentPlayer: Player
+): (Cell | null)[] {
+  const moveDelta = {
+    row: to.position.row - from.position.row,
+    column: to.position.column - from.position.column,
+  };
+
+  return [
+    getChipToEatByApproach(to, moveDelta, currentPlayer),
+    getChipToEatByWithdrawal(from, moveDelta, currentPlayer),
+  ];
+}
+
+function getChipToEatByApproach(
+  to: Cell,
+  delta: Position,
+  currentPlayer: Player
+): Cell | null {
+  const chipToEatByApproach = to.adjacents.filter(
+    (adjacent) =>
+      adjacent.chip !== currentPlayer &&
+      adjacent.chip !== null &&
+      adjacent.position.row - to.position.row === delta.row &&
+      adjacent.position.column - to.position.column === delta.column
+  );
+  const isApproach = chipToEatByApproach.length === 1;
+
+  return isApproach ? chipToEatByApproach[0] : null;
+}
+
+function getChipToEatByWithdrawal(
+  from: Cell,
+  delta: Position,
+  currentPlayer: Player
+): Cell | null {
+  const chipToEatByWithdrawal = from.adjacents.filter(
+    (adjacent) =>
+      adjacent.chip !== currentPlayer &&
+      adjacent.chip !== null &&
+      from.position.row - adjacent.position.row === delta.row &&
+      from.position.column - adjacent.position.column === delta.column
+  );
+  const isWithdrawal = chipToEatByWithdrawal.length === 1;
+
+  return isWithdrawal ? chipToEatByWithdrawal[0] : null;
 }
 
 export const gameStore = createGameStore();

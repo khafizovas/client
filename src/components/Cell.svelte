@@ -19,12 +19,13 @@
       .filter((move) => move.from === selectedChip?.position && move.to === cell.position);
 
   $: canSelectChip = !hasSelectedChip
-    && (availableMovesStart.filter((move) => move.type !== 'paika').length === 1
-        || !$gameStore.currentTurn.hasCapturingMoves);
-
+    && (availableMovesStart.filter((move) => move.type !== 'paika' 
+        || !$gameStore.currentTurn.hasCapturingMoves).length === 1
+      );
   $: canSelectEmptyCell = hasSelectedChip
-    && (availableMovesEnd.filter((move) => move.type !== 'paika').length === 1
-        || !$gameStore.currentTurn.hasCapturingMoves);
+    && (availableMovesEnd.filter((move) => move.type !== 'paika'
+        || !$gameStore.currentTurn.hasCapturingMoves).length === 1
+      );
 
   $: canSelectCell = canSelectChip || canSelectEmptyCell;
 

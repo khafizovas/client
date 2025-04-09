@@ -23,12 +23,13 @@
   }
 </script>
 
-<div>{boardData.currentPlayer}</div>
+<div>Сейчас ходит: {boardData.currentPlayer}</div>
 <div>
+  Счёт:
   <pre>{JSON.stringify(boardData.score, null, 2)}</pre>
 </div>
-<div>{boardData.currentTurn.hasCapturingMoves}</div>
-<div>{boardData.currentTurn.visitedCells}</div>
+<div>Можно есть? - {boardData.currentTurn.hasCapturingMoves}</div>
+<div>Посещённые за этот ход ячейки: {JSON.stringify(boardData.currentTurn.visitedCells)}</div>
 
 <div class="controls">
   <label>
