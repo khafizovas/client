@@ -4,34 +4,28 @@
   export let type: 'horizontal' | 'vertical' | 'diagonal diagonal-1' | 'diagonal diagonal-2';
   export let parentCell: Cell;
 
-  $: isVisible = getVisibility();
-
-  function getVisibility() {
-    switch (type) {
-      case 'horizontal':
-        return parentCell.adjacents.filter(
+  $: isVisible = 
+    type ==='horizontal'
+      && parentCell.adjacents.filter(
           (adjacent) => adjacent.position.row === parentCell.position.row
             && adjacent.position.column === parentCell.position.column + 1
-        ).length > 0;
-      case 'vertical':
-        return parentCell.adjacents.filter(
+        ).length > 0
+    || type === 'vertical'
+      && parentCell.adjacents.filter(
           (adjacent) => adjacent.position.column === parentCell.position.column
             && adjacent.position.row === parentCell.position.row + 1
-        ).length > 0;
-      case 'diagonal diagonal-1':
-        return parentCell.adjacents.filter(
+        ).length > 0
+    || type === 'diagonal diagonal-1'
+      && parentCell.adjacents.filter(
           (adjacent) => adjacent.position.row === parentCell.position.row + 1
             && adjacent.position.column === parentCell.position.column + 1
-        ).length > 0;
-      case 'diagonal diagonal-2':
-        return parentCell.adjacents.filter(
+        ).length > 0
+    || type === 'diagonal diagonal-2'
+      && parentCell.adjacents.filter(
           (adjacent) => adjacent.position.row === parentCell.position.row + 1
             && adjacent.position.column === parentCell.position.column - 1
-        ).length > 0;
-      default:
-        return false;
-    }
-  }
+        ).length > 0
+    || false;
 </script>
 
 {#if isVisible}
