@@ -1,17 +1,17 @@
 <script lang="ts">
   import Cell from './Cell.svelte';
-  import { BOARD_SIZES, gameStore, type BoardSize, type Cell as CellType } from '../store/game';
+  import { BOARD_SIZES, gameStore, type BoardSize, type Cell as CellType, type Move } from '../store/game';
 
   $: boardData = $gameStore;
   $: selectedChip = null as (CellType | null);
 
-  function selectChip(cell: CellType) {
+  function selectChip(cell: CellType, move: Move) {
     if (!selectedChip) {
       selectedChip = cell;
       return;
     }
 
-    gameStore.moveChip({from: selectedChip.position, to: cell.position, type: 'paika'});
+    gameStore.moveChip(move);
     selectedChip = null;
   }
 
@@ -24,11 +24,11 @@
 </script>
 
 <div>{boardData.currentPlayer}</div>
+<div>
+  <pre>{JSON.stringify(boardData.score, null, 2)}</pre>
+</div>
 <div>{boardData.currentTurn.hasCapturingMoves}</div>
 <div>{boardData.currentTurn.visitedCells}</div>
-<div style="overflow: scroll;">
-  <pre>{JSON.stringify(boardData.currentTurn.availableMoves, null, 2)}</pre>
-</div>
 
 <div class="controls">
   <label>

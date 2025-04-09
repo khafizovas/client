@@ -30,9 +30,11 @@ export type Cell = {
 
 export type MoveOption = 'approach' | 'withdrawal' | 'paika';
 export type Move = {
-  type: MoveOption;
   from: Position;
   to: Position;
+  delta: Position;
+  chipToEat: Cell | null;
+  type: MoveOption;
 };
 
 export type GameTurn = {
@@ -41,11 +43,17 @@ export type GameTurn = {
   visitedCells: Position[];
 };
 
+export type GameScore = {
+  playerA: number;
+  playerB: number;
+};
+
 export type GameState = {
   boardSize: BoardSize;
   board: Cell[][];
   currentPlayer: Player;
   currentTurn: GameTurn;
+  score: GameScore;
 };
 
 const initialState: GameState = {
@@ -56,6 +64,10 @@ const initialState: GameState = {
     availableMoves: [],
     hasCapturingMoves: false,
     visitedCells: [],
+  },
+  score: {
+    playerA: 0,
+    playerB: 0,
   },
 };
 
@@ -80,6 +92,19 @@ function createGameStore() {
         updatedBoard[move.to.row][move.to.column].chip =
           updatedBoard[move.from.row][move.from.column].chip;
         updatedBoard[move.from.row][move.from.column].chip = null;
+
+        // Едим шашки
+        let updatedScore = structuredClone(state.score);
+        let chipToEat = move.chipToEat;
+
+        while (chipToEat !== null) {
+          updatedBoard[chipToEat.position.row][chipToEat.position.column].chip =
+            null;
+
+          updatedScore[state.currentPlayer] += 1;
+
+          chipToEat = null;
+        }
 
         // Добавляем ячейки в массив посещённых в этом ходе
         let updatedVisitedCells = structuredClone(
@@ -130,6 +155,7 @@ function createGameStore() {
             hasCapturingMoves: updatedHasCapturingMoves,
             visitedCells: updatedVisitedCells,
           },
+          score: updatedScore,
         };
       }),
     setBoardSize: (size: BoardSize) =>
@@ -234,44 +260,52 @@ function getAvailableMoves(
       ...emptyCell.adjacents
         .filter((adjacent) => adjacent.chip === currentPlayer)
         .map((cell) => {
-          const deltaChipToEmpty = {
+          const moveDelta = {
             row: emptyCell.position.row - cell.position.row,
             column: emptyCell.position.column - cell.position.column,
           };
 
-          const isApproach =
-            emptyCell.adjacents.filter(
-              (adjacent) =>
-                adjacent.chip !== currentPlayer &&
-                adjacent.chip !== null &&
-                adjacent.position.row - emptyCell.position.row ===
-                  deltaChipToEmpty.row &&
-                adjacent.position.column - emptyCell.position.column ===
-                  deltaChipToEmpty.column
-            ).length > 0;
+          const chipToEatByApproach = emptyCell.adjacents.filter(
+            (adjacent) =>
+              adjacent.chip !== currentPlayer &&
+              adjacent.chip !== null &&
+              adjacent.position.row - emptyCell.position.row ===
+                moveDelta.row &&
+              adjacent.position.column - emptyCell.position.column ===
+                moveDelta.column
+          );
+          const isApproach = chipToEatByApproach.length === 1;
 
-          const isWithdrawal =
-            cell.adjacents.filter(
-              (adjacent) =>
-                adjacent.chip !== currentPlayer &&
-                adjacent.chip !== null &&
-                cell.position.row - adjacent.position.row ===
-                  deltaChipToEmpty.row &&
-                cell.position.column - adjacent.position.column ===
-                  deltaChipToEmpty.column
-            ).length > 0;
+          const chipToEatByWithdrawal = cell.adjacents.filter(
+            (adjacent) =>
+              adjacent.chip !== currentPlayer &&
+              adjacent.chip !== null &&
+              cell.position.row - adjacent.position.row === moveDelta.row &&
+              cell.position.column - adjacent.position.column ===
+                moveDelta.column
+          );
+          const isWithdrawal = chipToEatByWithdrawal.length === 1;
 
           if (isApproach || isWithdrawal) {
             hasCapturingMoves = true;
           }
 
+          const moveType =
+            (isApproach && ('approach' as const)) ||
+            (isWithdrawal && ('withdrawal' as const)) ||
+            ('paika' as const);
+
+          const chipToEat =
+            (isApproach && chipToEatByApproach[0]) ||
+            (isWithdrawal && chipToEatByWithdrawal[0]) ||
+            null;
+
           return {
             from: cell.position,
             to: emptyCell.position,
-            type:
-              (isApproach && ('approach' as const)) ||
-              (isWithdrawal && ('withdrawal' as const)) ||
-              ('paika' as const),
+            delta: moveDelta,
+            chipToEat,
+            type: moveType,
           };
         }),
     ],

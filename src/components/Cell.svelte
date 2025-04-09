@@ -1,10 +1,10 @@
 <script lang="ts">
   import Line from './Line.svelte';
-  import { gameStore, type Cell } from '../store/game';
+  import { gameStore, type Cell, type Move } from '../store/game';
 
   export let cell: Cell;
   export let isSelected: boolean;
-  export let onSelect: (cell: Cell) => void;
+  export let onSelect: (cell: Cell, move: Move) => void;
   export let selectedChip: Cell | null;
 
   $: hasSelectedChip = selectedChip !== null;
@@ -16,14 +16,14 @@
   $: availableMovesEnd = $gameStore
       .currentTurn
       .availableMoves
-      .filter((move) => move.to === cell.position);
+      .filter((move) => move.from === selectedChip?.position && move.to === cell.position);
 
   $: canSelectChip = !hasSelectedChip
-    && (availableMovesStart.filter((move) => move.type !== 'paika').length > 0
+    && (availableMovesStart.filter((move) => move.type !== 'paika').length === 1
         || !$gameStore.currentTurn.hasCapturingMoves);
 
   $: canSelectEmptyCell = hasSelectedChip
-    && (availableMovesEnd.filter((move) => move.type !== 'paika').length > 0
+    && (availableMovesEnd.filter((move) => move.type !== 'paika').length === 1
         || !$gameStore.currentTurn.hasCapturingMoves);
 
   $: canSelectCell = canSelectChip || canSelectEmptyCell;
@@ -33,7 +33,7 @@
       return;
     }
 
-    onSelect(cell);
+    onSelect(cell, availableMovesEnd[0]);
   }
 </script>
 
