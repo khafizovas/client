@@ -21,6 +21,19 @@
 
     gameStore.setBoardSize(newSize);
   }
+
+  const replacerFunc = () => {
+    const visited = new WeakSet();
+    return (key, value) => {
+      if (typeof value === "object" && value !== null) {
+        if (visited.has(value)) {
+          return;
+        }
+        visited.add(value);
+      }
+      return value;
+    };
+  };
 </script>
 
 <div>Сейчас ходит: {boardData.currentPlayer}</div>
@@ -30,6 +43,9 @@
 </div>
 <div>Можно есть? - {boardData.currentTurn.hasCapturingMoves}</div>
 <div>Посещённые за этот ход ячейки: {JSON.stringify(boardData.currentTurn.visitedCells)}</div>
+<div style="display: none;">
+  {JSON.stringify(boardData.currentTurn.availableMoves, replacerFunc())}
+</div>
 
 <div class="controls">
   <label>
